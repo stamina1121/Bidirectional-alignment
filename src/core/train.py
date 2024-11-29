@@ -11,12 +11,14 @@ import pathlib
 import transformers
 
 from src.core.trainer import ScheduledTrainer
-from src.data import make_supervised_data_module
+from src.data import make_supervised_data_module,make_supervised_data_module_train_eval
 from src.utils.config import DataArguments, ModelArguments, TrainingArguments
 from src.utils.io import safe_save_model_for_hf_trainer
+from transformers import EarlyStoppingCallback
 
 
 def train():
+    #import ipdb;ipdb.set_trace()
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments)
     )
@@ -49,19 +51,26 @@ def train():
     tokenizer.pad_token = tokenizer.unk_token
 
     # Load data
-    data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
-
+    if training_args.evaluation_strategy != 'no':
+        print('loading training data and eval data')
+        data_module = make_supervised_data_module_train_eval(tokenizer=tokenizer, data_args=data_args)
+    else:
+        print('just training data')
+        data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
     # Start trainner
     trainer = ScheduledTrainer(
-        model=model, tokenizer=tokenizer, args=training_args, **data_module
-    )
-    if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
-        trainer.train(resume_from_checkpoint=True)
+        model=model, tokenizer=tokenizer, args=training_args, **data_module)
+
+    #if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
+    if 'checkpoint' in model_args.model_name_or_path:
+        #trainer.train(resume_from_checkpoint=model_args.model_name_or_path)
+        trainer.train(resume_from_checkpoint=model_args.model_name_or_path)
     else:
         trainer.train()
     model.config.use_cache = True
+    trainer.save_model()
     trainer.save_state()
-    safe_save_model_for_hf_trainer(trainer=trainer, output_dir=training_args.output_dir)
+    #safe_save_model_for_hf_trainer(trainer=trainer, output_dir=training_args.output_dir)
 
 
 if __name__ == "__main__":

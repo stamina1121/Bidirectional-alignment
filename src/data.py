@@ -98,6 +98,7 @@ def preprocess(
 
 
 def convert_inst_resp_pairs_into_fastchat(ins: dict, reverse: bool = False) -> dict:
+    ###check! 
     inst = ins["instruction"] if not reverse else ins["response"]
     resp = ins["response"] if not reverse else ins["instruction"]
     if "score" in ins:
@@ -197,7 +198,7 @@ def make_supervised_data_module(tokenizer: PreTrainedTokenizer, data_args) -> di
         LazySupervisedDataset if data_args.lazy_preprocess else SupervisedDataset
     )
     rank0_print("Loading data...")
-
+    
     train_data = load_jsonlines(data_args.data_path)
     train_dataset = dataset_cls(
         train_data, tokenizer=tokenizer, reverse=data_args.reverse
@@ -213,6 +214,25 @@ def make_supervised_data_module(tokenizer: PreTrainedTokenizer, data_args) -> di
 
     return dict(train_dataset=train_dataset, eval_dataset=eval_dataset)
 
+def make_supervised_data_module_train_eval(tokenizer: PreTrainedTokenizer, data_args) -> dict:
+    """Make dataset and collator for supervised fine-tuning."""
+    dataset_cls = (
+        LazySupervisedDataset if data_args.lazy_preprocess else SupervisedDataset
+    )
+    rank0_print("Loading data...")
+    data = load_jsonlines(data_args.data_path)
+    train_data = data[:3000]+data[3200:20000]
+    eval_data = data[3000:3200]
+    train_dataset = dataset_cls(
+        train_data, tokenizer=tokenizer, reverse=data_args.reverse
+    )
+    print(train_dataset[0])
+    
+    eval_dataset = dataset_cls(
+            eval_data, tokenizer=tokenizer, reverse=data_args.reverse
+        )
+
+    return dict(train_dataset=train_dataset, eval_dataset=eval_dataset)
 
 class InferenceDataset(Dataset):
     def __init__(

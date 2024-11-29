@@ -10,9 +10,9 @@ def main(args):
     data = load_jsonlines(args.data_filepath)
     results = []
     for ins in tqdm(data, desc="Building curation dataset"):
-        generated_instruction = ins[args.generated_instruction_column_name]
-        response = ins[args.response_column_name]
-        prompt = prompt_template.format(
+        generated_instruction = ins[args.generated_instruction_column_name] # response
+        response = ins[args.response_column_name] # prompt
+        prompt = prompt_template.format(                                    # next part's prompt
             generated_instruction=generated_instruction,
             response=response,
         )
