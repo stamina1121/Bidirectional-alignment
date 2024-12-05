@@ -198,11 +198,14 @@ def make_supervised_data_module(tokenizer: PreTrainedTokenizer, data_args) -> di
         LazySupervisedDataset if data_args.lazy_preprocess else SupervisedDataset
     )
     rank0_print("Loading data...")
-    
     train_data = load_jsonlines(data_args.data_path)
     train_dataset = dataset_cls(
         train_data, tokenizer=tokenizer, reverse=data_args.reverse
     )
+    import random
+    random_seed = random.randint(0, 2**12 - 1)
+    random.seed(random_seed)
+    random.shuffle(train_data)
 
     if data_args.eval_data_path:
         eval_data = load_jsonlines(data_args.eval_data_path)
@@ -233,6 +236,33 @@ def make_supervised_data_module_train_eval(tokenizer: PreTrainedTokenizer, data_
         )
 
     return dict(train_dataset=train_dataset, eval_dataset=eval_dataset)
+
+def make_data_module(tokenizer: PreTrainedTokenizer, data_args, custom_data=None) -> dict:
+    """Make dataset and collator for supervised fine-tuning."""
+    dataset_cls = (
+        LazySupervisedDataset if data_args.lazy_preprocess else SupervisedDataset
+    )
+    rank0_print("Loading data...")
+    if custom_data is not None:
+        train_data = custom_data
+    else:
+        train_data = load_jsonlines(data_args.data_path)
+        train_data = train_data[:1600]
+        
+    train_dataset = dataset_cls(
+        train_data, tokenizer=tokenizer, reverse=data_args.reverse
+    )
+
+    if data_args.eval_data_path:
+        eval_data = load_jsonlines(data_args.eval_data_path)
+        eval_dataset = dataset_cls(
+            eval_data, tokenizer=tokenizer, reverse=data_args.reverse
+        )
+    else:
+        eval_dataset = None
+
+    return dict(train_dataset=train_dataset, eval_dataset=eval_dataset)
+
 
 class InferenceDataset(Dataset):
     def __init__(

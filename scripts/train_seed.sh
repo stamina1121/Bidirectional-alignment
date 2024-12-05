@@ -6,7 +6,7 @@ num_gpu_per_node=8
 bsz=32
 max_steps=500
 data_path="data/seed/seed.jsonl"
-output_dir="outputs/forward/Mf"
+output_dir="outputs_v100/forward/Mf"
 # max_steps=765  # 21,301 curated instances (score=5) + 3,200 seed data for M1 training
 # data_path="data/curated/m1.jsonl"
 # output_dir="/dev/shm/tzhu/Humback/models/m1_with_diff_sys_prompt"
@@ -15,17 +15,17 @@ output_dir="outputs/forward/Mf"
 #output_dir="/dev/shm/tzhu/Humback/models/m1_strict_score_matching_2400steps"
 
 mkdir -p $output_dir
-bsz_per_dev=$(echo "${bsz} / ${num_nodes} / ${num_gpu_per_node}" | bc)
+#bsz_per_dev=$(echo "${bsz} / ${num_nodes} / ${num_gpu_per_node}" | bc)
 
 torchrun \
     --nnodes ${num_nodes} \
     --nproc_per_node ${num_gpu_per_node} \
     -m src.core.train \
-        --deepspeed conf/ds_zero2default.json \
+        --deepspeed conf/ds_zero1default.json \
         --model_name_or_path meta-llama/Llama-2-7b-hf \
         --data_path ${data_path} \
-        --per_device_train_batch_size 1 \
-        --per_device_eval_batch_size 1 \
+        --per_device_train_batch_size 4 \
+        --per_device_eval_batch_size 4 \
         --adam_beta1 0.9 \
         --adam_beta2 0.95 \
         --learning_rate "1e-5" \
@@ -40,7 +40,7 @@ torchrun \
         --ddp_timeout 30000 \
         --logging_first_step True \
         --bf16 False \
-	--fp16 False \
+	--fp16 True \
         --tf32 False \
         --ddp_find_unused_parameters False \
         --gradient_checkpointing \
@@ -49,6 +49,7 @@ torchrun \
         --lazy_preprocess True \
         --max_steps ${max_steps} \
         --save_strategy steps \
-        --save_steps 500 \
+        --save_steps 200 \
+
 #export CUDA_VISIBLE_DEVICES=0
 #python -m ipdb src/core/train_flash_attn.py \

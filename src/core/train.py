@@ -18,7 +18,7 @@ from transformers import EarlyStoppingCallback
 
 
 def train():
-    #import ipdb;ipdb.set_trace()
+#    import ipdb;ipdb.set_trace()
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments)
     )
@@ -63,7 +63,7 @@ def train():
 
     #if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
     if 'checkpoint' in model_args.model_name_or_path:
-        #trainer.train(resume_from_checkpoint=model_args.model_name_or_path)
+        #trainer.train(resume_from_checkpoint=True)
         trainer.train(resume_from_checkpoint=model_args.model_name_or_path)
     else:
         trainer.train()

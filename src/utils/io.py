@@ -5,6 +5,8 @@ import transformers
 
 
 def dump_jsonlines(obj, filepath, **kwargs):
+    import os
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
     path = Path(filepath)
     path.parent.mkdir(parents=True, exist_ok=True)
 
