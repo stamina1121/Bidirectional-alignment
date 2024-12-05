@@ -71,4 +71,10 @@ if __name__ == "__main__":
     parser.add_argument("--data_filepath", type=str)
     parser.add_argument("--save_filepath", type=str)
     parser.add_argument("--prompt_column_name", type=str, default="instruction")
-    parser.add_argument("--reverse", acti
+    parser.add_argument("--reverse", action="store_true")
+    parser.add_argument("--model_path", type=str)
+    parser.add_argument("--dtype", type=str, default="bfloat16")
+    parser.add_argument("--tensor_parallel_size", type=int, default=1)
+    args = parser.parse_args()
+
+    main(args)
